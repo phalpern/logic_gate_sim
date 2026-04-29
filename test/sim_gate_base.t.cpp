@@ -1,80 +1,11 @@
-/* sim_core.t.cpp                                                     -*-C++-*-
+/* sim_gate_base.t.cpp                                                -*-C++-*-
  *
- * Copyright (C) 2024 Pablo Halpern <phalpern@halpernwightsoftware.com>
+ * Copyright (C) 2026 Pablo Halpern <phalpern@halpernwightsoftware.com>
  * Distributed under the Boost Software License - Version 1.0
  */
 
-#include <sim_core.h>
+#include <sim_gate_base.h>
 #include <gtest/gtest.h>
-
-/// Test the `sim::time` class
-TEST(SimCoreTest, Time) {
-  // Clock starts at zero and stays until we advance it.
-  EXPECT_EQ(0,  sim::time::clock());
-  EXPECT_EQ(0,  sim::time::clock());
-
-  // After each advance (and only when advanced), clock is incremented
-  sim::time::advance_clock();
-  EXPECT_EQ(1,  sim::time::clock());
-  EXPECT_EQ(1,  sim::time::clock());
-  sim::time::advance_clock();
-  EXPECT_EQ(2,  sim::time::clock());
-  EXPECT_EQ(2,  sim::time::clock());
-
-  // Resetting clock sets it to zero again
-  sim::time::reset_clock();
-  EXPECT_EQ(0,  sim::time::clock());
-  EXPECT_EQ(0,  sim::time::clock());
-}
-
-/// Single-thread test of the `sim::input_lead` and `sim::output_lead` classes.
-TEST(SimCoreTest, InputOutputLead_ST) {
-  {
-    sim::output_lead ol;
-    sim::input_lead  il; const sim::input_lead& ilC = il;
-    il.connect_to(&ol);
-
-    EXPECT_FALSE(ilC.get());
-
-    sim::time::advance_clock();
-    EXPECT_FALSE(ilC.get());  // Was not changed
-
-    ol.set(true);
-    EXPECT_FALSE(ilC.get());  // Does not see change
-
-    sim::time::advance_clock();
-    EXPECT_TRUE(ilC.get());  // Change is now visible
-
-    ol.set(true); // No change
-    EXPECT_TRUE(ilC.get());
-
-    ol.set(false);
-    EXPECT_TRUE(ilC.get());  // Does not see change
-
-    ol.set(false);           // idempotent
-    EXPECT_TRUE(ilC.get());  // Does not see change
-
-    sim::time::advance_clock();
-    EXPECT_FALSE(ilC.get());  // Change is now visible
-  }
-
-  {
-    sim::output_lead ol(true);  // With initial value
-    sim::input_lead  il; const sim::input_lead& ilC = il;
-    il.connect_to(&ol);
-
-    EXPECT_TRUE(ilC.get());  // See initial value
-
-    sim::time::advance_clock();
-    EXPECT_TRUE(ilC.get());  // No change
-
-    ol.set(false);
-    EXPECT_TRUE(ilC.get());  // Does not see change
-
-    sim::time::advance_clock();
-    EXPECT_FALSE(ilC.get());  // Change is now visible
-  }
-}
 
 namespace test_gate_prot_ns {
 
@@ -142,7 +73,7 @@ public:
 } // close namespace test_gate_prot_ns
 
 /// Test the `gate` protocol
-TEST(SimCoreTest, gateProtocol) {
+TEST(SimGateBaseTest, gateProtocol) {
   using namespace test_gate_prot_ns;
 
   bit_source_g source;
@@ -155,7 +86,7 @@ TEST(SimCoreTest, gateProtocol) {
   sink.execute();
   EXPECT_FALSE(sink.get_value());  // Read old `source` value (also `false`)
 
-  sim::time::advance_clock();
+  sim::clock::advance();
 
   // Second clock cycle: set `source` output to `true`
   EXPECT_FALSE(sink.get_value());  // Read new `source` value (no change)
@@ -164,7 +95,7 @@ TEST(SimCoreTest, gateProtocol) {
   sink.execute();
   EXPECT_FALSE(sink.get_value());  // Change not visible until next cycle
 
-  sim::time::advance_clock();
+  sim::clock::advance();
 
   // Third clock cycle: set `source` output back to `false`
   source.set_value(false);
@@ -172,7 +103,7 @@ TEST(SimCoreTest, gateProtocol) {
   sink.execute();
   EXPECT_TRUE(sink.get_value());  // Change from last clock cycle now visible
 
-  sim::time::advance_clock();
+  sim::clock::advance();
 
   // Fourth clock cycle: Last change propagates through
   source.execute();
@@ -217,7 +148,7 @@ public:
 } // close namespace test_gateWithIO_prot_ns
 
 /// Test the `gate_with_IO` protocol
-TEST(SimCoreTest, gateWithIOProtocol) {
+TEST(SimGateBaseTest, gateWithIOProtocol) {
   using namespace test_gateWithIO_prot_ns;
 
   bit_source_g source;
@@ -230,7 +161,7 @@ TEST(SimCoreTest, gateWithIOProtocol) {
   sink.execute();
   EXPECT_FALSE(sink.get_value());  // Read old `source` value (also `false`)
 
-  sim::time::advance_clock();
+  sim::clock::advance();
 
   // Second clock cycle: set `source` output to `true`
   EXPECT_FALSE(sink.get_value());  // Read new `source` value (no change)
@@ -239,7 +170,7 @@ TEST(SimCoreTest, gateWithIOProtocol) {
   sink.execute();
   EXPECT_FALSE(sink.get_value());  // Change not visible until next cycle
 
-  sim::time::advance_clock();
+  sim::clock::advance();
 
   // Third clock cycle: set `source` output back to `false`
   source.set_value(false);
@@ -247,7 +178,7 @@ TEST(SimCoreTest, gateWithIOProtocol) {
   sink.execute();
   EXPECT_TRUE(sink.get_value());  // Change from last clock cycle now visible
 
-  sim::time::advance_clock();
+  sim::clock::advance();
 
   // Fourth clock cycle: Last change propagates through
   source.execute();
@@ -268,7 +199,7 @@ class implies_g : public sim::gate_with_IO<2, 1>
 
 } // close namespace test_simpleGate_ns
 
-TEST(SimCoreTest, simpleGate) {
+TEST(SimGateBaseTest, simpleGate) {
   using namespace test_gateWithIO_prot_ns;
   using namespace test_simpleGate_ns;
 
@@ -292,17 +223,17 @@ TEST(SimCoreTest, simpleGate) {
     for (auto& g : gate_list)
       g->execute();
 
-    sim::time::advance_clock();
+    sim::clock::advance();
 
     for (auto& g : gate_list)
       g->execute();
 
-    sim::time::advance_clock();
+    sim::clock::advance();
 
     for (auto& g : gate_list)
       g->execute();
 
-    sim::time::advance_clock();
+    sim::clock::advance();
 
     EXPECT_EQ(result.get_value(), exp);
   }

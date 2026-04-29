@@ -2,6 +2,15 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Run all tests (ctest)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/usr/bin/ctest",
+      "args": ["--output-on-failure"],
+      "cwd": "${command:cmake.buildDirectory}",
+      "preLaunchTask": "CMake: build"
+    },
+    {
       "name": "Debug CMake target",
       "type": "cppdbg",
       "request": "launch",
