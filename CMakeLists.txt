@@ -57,6 +57,12 @@ add_executable(gatesim
     ${GATESIM_MAIN_SOURCE}
 )
 
+add_custom_target(run
+    COMMAND gatesim
+    DEPENDS gatesim
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
 target_link_libraries(gatesim
     PRIVATE gatesim_lib
 )

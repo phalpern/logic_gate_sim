@@ -76,17 +76,17 @@ TEST(SimCoreTest, InputOutputLead_ST) {
   }
 }
 
-namespace test_A {
+namespace test_gate_prot_ns {
 
 /// Test class that takes no input and simply sets a user-supplied Boolean
 /// value to a single output lead. Used to test the `gate` protocol.
-class bit_source : public sim::gate
+class bit_source_g : public sim::gate
 {
   bool             m_value;
   sim::output_lead m_out;
 
 public:
-  explicit bit_source(bool initval = false)
+  explicit bit_source_g(bool initval = false)
     : m_value(initval), m_out(initval) { }
 
   /// Set value to set to output lead on `execute`
@@ -110,13 +110,13 @@ public:
 /// Test class that has no output leads but simply makes the value from its
 /// input lead available via a `get_value` method. Used to test the `gate`
 /// protocol.
-class bit_sink : public sim::gate
+class bit_sink_g : public sim::gate
 {
   bool            m_value = false;
   sim::input_lead m_in;
 
 public:
-  bit_sink() = default;
+  bit_sink_g() = default;
 
   /// Return the value read from the input lead.
   bool get_value() const { return m_value; }
@@ -139,40 +139,173 @@ public:
   void execute() override { m_value = m_in.get(); }
 };
 
-} // close namespace test_A
+} // close namespace test_gate_prot_ns
 
 /// Test the `gate` protocol
 TEST(SimCoreTest, gateProtocol) {
-  using namespace test_A;
+  using namespace test_gate_prot_ns;
 
-  bit_source source;
-  bit_sink   sink;
+  bit_source_g source;
+  bit_sink_g   sink;
   sink.connect_input(0, &source, 0);
-
   EXPECT_FALSE(sink.get_value());
+
+  // First clock cycle: set `source` output to `false` (i.e. no change).
   source.execute();
   sink.execute();
-  EXPECT_FALSE(sink.get_value());
+  EXPECT_FALSE(sink.get_value());  // Read old `source` value (also `false`)
 
   sim::time::advance_clock();
-  EXPECT_FALSE(sink.get_value());
 
+  // Second clock cycle: set `source` output to `true`
+  EXPECT_FALSE(sink.get_value());  // Read new `source` value (no change)
   source.set_value(true);
   source.execute();
   sink.execute();
   EXPECT_FALSE(sink.get_value());  // Change not visible until next cycle
 
   sim::time::advance_clock();
-  EXPECT_FALSE(sink.get_value());  // Didn't execute yet
+
+  // Third clock cycle: set `source` output back to `false`
   source.set_value(false);
   source.execute();
   sink.execute();
-  EXPECT_TRUE(sink.get_value());  // Value computed in last clock cycle
+  EXPECT_TRUE(sink.get_value());  // Change from last clock cycle now visible
 
   sim::time::advance_clock();
-  // source.execute();  // Not needed for this test
+
+  // Fourth clock cycle: Last change propagates through
+  source.execute();
   sink.execute();
-  EXPECT_FALSE(sink.get_value());  // Value propagated thrugh
+  EXPECT_FALSE(sink.get_value());  // Change from last clock cycle now visible
+}
+
+namespace test_gateWithIO_prot_ns {
+
+/// Test class that takes no input and simply sets a user-supplied Boolean
+/// value to a single output lead. Used to test the `gate_with_IO` protocol.
+class bit_source_g : public sim::gate_with_IO<0, 1>
+{
+  bool             m_value;
+
+public:
+  explicit bit_source_g(bool initval = false)
+    : m_value(initval) { this->m_outputs[0].set(initval); }
+
+  /// Set value to set to output lead on `execute`
+  void set_value(bool v) { m_value = v; }
+
+  void execute() override { m_outputs[0].set(m_value); }
+};
+
+/// Test class that has no output leads but simply makes the value from its
+/// input lead available via a `get_value` method. Used to test the
+/// `gate_with_IO` protocol.
+class bit_sink_g : public sim::gate_with_IO<1, 0>
+{
+  bool            m_value = false;
+
+public:
+  bit_sink_g() = default;
+
+  /// Return the value read from the input lead.
+  bool get_value() const { return m_value; }
+
+  void execute() override { m_value = m_inputs[0].get(); }
+};
+
+} // close namespace test_gateWithIO_prot_ns
+
+/// Test the `gate_with_IO` protocol
+TEST(SimCoreTest, gateWithIOProtocol) {
+  using namespace test_gateWithIO_prot_ns;
+
+  bit_source_g source;
+  bit_sink_g   sink;
+  sink.connect_input(0, &source, 0);
+  EXPECT_FALSE(sink.get_value());
+
+  // First clock cycle: set `source` output to `false` (i.e. no change).
+  source.execute();
+  sink.execute();
+  EXPECT_FALSE(sink.get_value());  // Read old `source` value (also `false`)
+
+  sim::time::advance_clock();
+
+  // Second clock cycle: set `source` output to `true`
+  EXPECT_FALSE(sink.get_value());  // Read new `source` value (no change)
+  source.set_value(true);
+  source.execute();
+  sink.execute();
+  EXPECT_FALSE(sink.get_value());  // Change not visible until next cycle
+
+  sim::time::advance_clock();
+
+  // Third clock cycle: set `source` output back to `false`
+  source.set_value(false);
+  source.execute();
+  sink.execute();
+  EXPECT_TRUE(sink.get_value());  // Change from last clock cycle now visible
+
+  sim::time::advance_clock();
+
+  // Fourth clock cycle: Last change propagates through
+  source.execute();
+  sink.execute();
+  EXPECT_FALSE(sink.get_value());  // Change from last clock cycle now visible
+}
+
+namespace test_simpleGate_ns {
+
+/// Simple gate that implements A => B (A implies B), e.g., (!A || B)
+class implies_g : public sim::gate_with_IO<2, 1>
+{
+  void execute() override
+  {
+    m_outputs[0].set(!m_inputs[0].get() || m_inputs[1].get());
+  }
+};
+
+} // close namespace test_simpleGate_ns
+
+TEST(SimCoreTest, simpleGate) {
+  using namespace test_gateWithIO_prot_ns;
+  using namespace test_simpleGate_ns;
+
+  bit_source_g  A, B;
+  bit_sink_g    result;
+  implies_g     ig;
+  std::array<sim::gate*, 4> gate_list{ &ig, &A, &B, &result };
+
+  result.connect_input(0, &ig, 0);
+  ig.connect_input(0, &A, 0);
+  ig.connect_input(1, &B, 0);
+
+  for (unsigned i = 0; i < 4; ++i) {
+    bool a = i & 1;  // Low bit
+    bool b = i & 2;  // High bit
+    bool exp = !a || b;
+
+    A.set_value(a);
+    B.set_value(b);
+
+    for (auto& g : gate_list)
+      g->execute();
+
+    sim::time::advance_clock();
+
+    for (auto& g : gate_list)
+      g->execute();
+
+    sim::time::advance_clock();
+
+    for (auto& g : gate_list)
+      g->execute();
+
+    sim::time::advance_clock();
+
+    EXPECT_EQ(result.get_value(), exp);
+  }
 }
 
 // Local Variables:
