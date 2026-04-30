@@ -53,11 +53,11 @@ public:
 };
 
 /// A partial implemention (still abstract) of the `gate` protocol, handling
-/// all of the interconnection logic. A class derived from `gate_with_IO<In,
+/// all of the interconnection logic. A class derived from `gate_with_leads<In,
 /// Out>` has `In` input leads and `Out` output leads. A derived class that is
 /// made concrete simply by defining the `execute` method.
 template <std::size_t NumInputs, std::size_t NumOutputs>
-class gate_with_IO : public gate
+class gate_with_leads : public gate
 {
 protected:
   std::array<input_lead,  NumInputs>  m_inputs;
@@ -78,16 +78,16 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 
 template <std::size_t NI, std::size_t NO>
-const output_lead* gate_with_IO<NI,NO>::get_output_lead(unsigned idx) const
+const output_lead* gate_with_leads<NI,NO>::get_output_lead(unsigned idx) const
 {
   assert(idx < NO);  // Precondition check
   return &m_outputs[idx];
 }
 
 template <std::size_t NI, std::size_t NO>
-void gate_with_IO<NI,NO>::connect_input(unsigned    input_idx,
-                                        const gate* src_gate,
-                                        unsigned    src_output_idx)
+void gate_with_leads<NI,NO>::connect_input(unsigned    input_idx,
+                                           const gate* src_gate,
+                                           unsigned    src_output_idx)
 {
   assert(input_idx < NI);       // Precondition check
   assert(src_gate != nullptr);  // Precondition check

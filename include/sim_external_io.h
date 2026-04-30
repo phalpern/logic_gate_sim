@@ -17,7 +17,7 @@ namespace sim {
 /// Array of `SZ` Boolean ports representing external input values (i.e. the
 /// inputs to the simulation).
 template <std::size_t SZ>
-class external_inputs : public gate_with_IO<0, SZ>
+class external_inputs : public gate_with_leads<0, SZ>
 {
 public:
   external_inputs() = default;
@@ -45,7 +45,7 @@ public:
 /// Array of `SZ` data sinks representing external output ports (i.e. the
 /// outputs from the simulation).
 template <std::size_t SZ>
-class external_outputs : public gate_with_IO<SZ, 0>
+class external_outputs : public gate_with_leads<SZ, 0>
 {
 public:
   external_outputs() = default;
@@ -65,7 +65,7 @@ public:
 /// Output-only gate yielding a pulse every 2 ticks. The single output lead has
 /// a value of `false` when `sim::clock::ticks()` is even and `true` when it's
 /// odd.
-class external_pulse : public gate_with_IO<0, 1>
+class external_pulse : public gate_with_leads<0, 1>
 {
 public:
   /// Update the output on the next clock cycle.

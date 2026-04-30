@@ -20,37 +20,37 @@
 namespace simple_gates {
 
 /// One-input `NOT` gate
-struct NOT : sim::gate_with_IO<1, 1>
+struct NOT : sim::gate_with_leads<1, 1>
 {
   void execute() override;
 };
 
 /// Two-input `AND` gate
-struct AND : sim::gate_with_IO<2, 1>
+struct AND : sim::gate_with_leads<2, 1>
 {
   void execute() override;
 };
 
 /// Two-input `OR` gate
-struct OR : sim::gate_with_IO<2, 1>
+struct OR : sim::gate_with_leads<2, 1>
 {
   void execute() override;
 };
 
 /// Two-input `NAND` gate
-struct NAND : sim::gate_with_IO<2, 1>
+struct NAND : sim::gate_with_leads<2, 1>
 {
   void execute() override;
 };
 
 /// Two-input `NOR` gate
-struct NOR : sim::gate_with_IO<2, 1>
+struct NOR : sim::gate_with_leads<2, 1>
 {
   void execute() override;
 };
 
 /// Two-input `XOR` gate
-struct XOR : sim::gate_with_IO<2, 1>
+struct XOR : sim::gate_with_leads<2, 1>
 {
   void execute() override;
 };

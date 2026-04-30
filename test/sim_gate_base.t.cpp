@@ -114,8 +114,8 @@ TEST(SimGateBaseTest, gateProtocol) {
 namespace test_gateWithIO_prot_ns {
 
 /// Test class that takes no input and simply sets a user-supplied Boolean
-/// value to a single output lead. Used to test the `gate_with_IO` protocol.
-class bit_source_g : public sim::gate_with_IO<0, 1>
+/// value to a single output lead. Used to test the `gate_with_leads` protocol.
+class bit_source_g : public sim::gate_with_leads<0, 1>
 {
   bool             m_value;
 
@@ -131,8 +131,8 @@ public:
 
 /// Test class that has no output leads but simply makes the value from its
 /// input lead available via a `get_value` method. Used to test the
-/// `gate_with_IO` protocol.
-class bit_sink_g : public sim::gate_with_IO<1, 0>
+/// `gate_with_leads` protocol.
+class bit_sink_g : public sim::gate_with_leads<1, 0>
 {
   bool            m_value = false;
 
@@ -147,7 +147,7 @@ public:
 
 } // close namespace test_gateWithIO_prot_ns
 
-/// Test the `gate_with_IO` protocol
+/// Test the `gate_with_leads` protocol
 TEST(SimGateBaseTest, gateWithIOProtocol) {
   using namespace test_gateWithIO_prot_ns;
 
@@ -189,7 +189,7 @@ TEST(SimGateBaseTest, gateWithIOProtocol) {
 namespace test_simpleGate_ns {
 
 /// Simple gate that implements A => B (A implies B), e.g., (!A || B)
-class implies_g : public sim::gate_with_IO<2, 1>
+class implies_g : public sim::gate_with_leads<2, 1>
 {
   void execute() override
   {
