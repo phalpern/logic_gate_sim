@@ -2,6 +2,8 @@
  *
  * Copyright (C) 2026 Pablo Halpern <phalpern@halpernwightsoftware.com>
  * Distributed under the Boost Software License - Version 1.0
+ *
+ * @brief Abstract base classes for implementing simulated gates
  */
 
 #ifndef INCLUDED_SIM_GATE_BASE
@@ -87,7 +89,7 @@ void gate_with_IO<NI,NO>::connect_input(unsigned    input_idx,
                                         const gate* src_gate,
                                         unsigned    src_output_idx)
 {
-  assert(input_idx < NI);        // Precondition check
+  assert(input_idx < NI);       // Precondition check
   assert(src_gate != nullptr);  // Precondition check
 
   m_inputs[input_idx].connect_to(src_gate->get_output_lead(src_output_idx));

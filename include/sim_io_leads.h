@@ -2,6 +2,15 @@
  *
  * Copyright (C) 2026 Pablo Halpern <phalpern@halpernwightsoftware.com>
  * Distributed under the Boost Software License - Version 1.0
+ *
+ * @brief Representation of I/O leads for gates and gate interconnections.
+ *
+ * Every gate has zero or more input leads and output leads. Each input lead of
+ * a gate must be connected to exactly one output lead of the same or another
+ * gate. Conversely each output lead from a gate can be connected to zero or
+ * more input leads. There is no separate object representing the connection
+ * (wire) between an input and output lead; the connection is represented
+ * entirely within the `input_lead` data structure.
  */
 
 #ifndef INCLUDED_SIM_IO_LEADS
@@ -11,12 +20,6 @@
 
 namespace sim {
 
-/// Each gate has zero or more input leads and output leads. A gate's input
-/// leads mush each be connected to one output lead of (the same or another
-/// gate). Conversely each output lead from a gate can be connected to zero or
-/// more input leads. There is no separate object representing the interconnect
-/// (wire) between input and output leads; the connection is represented
-/// entirely within the `input_lead` data structure.
 class input_lead;  // Forward declaration
 
 /// Model an output lead. Writing a value to the output is not seen by any

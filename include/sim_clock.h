@@ -2,6 +2,8 @@
  *
  * Copyright (C) 2026 Pablo Halpern <phalpern@halpernwightsoftware.com>
  * Distributed under the Boost Software License - Version 1.0
+ *
+ * @brief Simulated global clock for discrete-tick logic
  */
 
 #ifndef INCLUDED_SIM_CLOCK

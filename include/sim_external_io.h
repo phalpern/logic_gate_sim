@@ -1,10 +1,10 @@
-/* sim_external_io.h                                                   -*-C++-*-
+/* sim_external_io.h                                                  -*-C++-*-
  *
  * Copyright (C) 2026 Pablo Halpern <phalpern@halpernwightsoftware.com>
  * Distributed under the Boost Software License - Version 1.0
+ *
+ * @brief Special gates simulating external inputs and outputs
  */
-
-// Core gates for simulation
 
 #ifndef INCLUDED_SIM_EXTERNAL_IO
 #define INCLUDED_SIM_EXTERNAL_IO
@@ -25,12 +25,18 @@ public:
   /// Set the value of the input port specified by `index`. The value is
   /// visible at the start of the next clock cycle.
   void set_value(std::size_t index, bool value)
-    { this->m_outputs[index].set(value); }
+  {
+    assert(index < SZ);  // precondition check
+    this->m_outputs[index].set(value);
+  }
 
   /// Set the value of the output port specified by `index`. The value is
   /// visible immediately, without waiting for the next clock cycle.
   void set_value_immediate(std::size_t index, bool value)
-    { this->m_outputs[index].set_immediate(value); }
+  {
+    assert(index < SZ);  // precondition check
+    this->m_outputs[index].set_immediate(value);
+  }
 
   /// Do nothing on execute.
   void execute() override;
@@ -47,7 +53,10 @@ public:
   /// Get the value of the output lead to which input port specified by `index`
   /// is connected.
   bool get_value(std::size_t index) const
-    { return this->m_inputs[index].get(); }
+  {
+    assert(index < SZ);  // precondition check
+    return this->m_inputs[index].get();
+  }
 
   /// Do nothing on execute.
   void execute() override;
