@@ -68,7 +68,7 @@ public:
 
   void connect_input(unsigned    input_idx,
                      const gate* src_gate,
-                     unsigned    src_output_idx) override;
+                     unsigned    src_output_idx = 0) override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

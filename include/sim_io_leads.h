@@ -36,15 +36,19 @@ class output_lead {
   /// timestamp (according to `clock::value()`) for the tick after which value
   /// was last toggled. A connected `input_lead` will not use the new value
   /// unless the stored timestamp no later than the current time.
-  std::atomic<clock::value_type> m_data{clock::value()};
+  std::atomic<clock::value_type> m_data{0};
 
 public:
-  output_lead() = default;
-  constexpr ~output_lead() = default;
+  /// Precondition: clock must be at zero when object is constructed.
+  output_lead() { assert(0 == clock::value()); }
 
   /// Initialize with specified `v` value.
+  /// Precondition: clock must be at zero when object is constructed.
   explicit output_lead(bool v)
-    : m_data((v ? clock::high_bit : 0) | clock::value()) { }
+    : m_data(v ? clock::high_bit : 0) { assert(0 == clock::value()); }
+
+  /// Destructor does nothing
+  constexpr ~output_lead() = default;
 
   // Not copyable or movable
   output_lead(const output_lead&) = delete;
@@ -52,8 +56,16 @@ public:
 
   /// Set a new value. This operation is thread safe with respect to concurrent
   /// reads via connected `input_lead` objects, but is not safe from concurrent
-  /// `set` operations.
+  /// `set` operations. The new value is not visible to a connected
+  /// `input_lead` until the start of the next clock cycle.
   void set(bool v);
+
+  /// Set a new value and make the result available immediate (i.e., within
+  /// the same clock cycle. This operation is thread safe with respect to
+  /// concurrent reads via connected `input_lead` objects, but is not safe from
+  /// concurrent `set` operations. This operation is used by the simulator
+  /// framework itself and should not be used by a gate's `execute` method.
+  void set_immediate(bool v);
 };
 
 /// Model an input lead. Reading a value from an input does not see changes to
@@ -116,7 +128,26 @@ void output_lead::set(bool v)
   // get occur within the same clock cycle, it doesn't matter whether or not
   // the new data is immediately visble. Conversely, sequencing ensures that
   // the new data is always available after an intervening call to
-  // `clock::advance()`,
+  // `clock::advance()`.
+  m_data.store(data, std::memory_order::relaxed);
+}
+
+inline
+void output_lead::set_immediate(bool v)
+{
+  // This function is identical to the `set` function except that we don't add
+  // one to the timestamp before storing the value.
+  auto data = m_data.load(std::memory_order::relaxed);
+  auto value_bit = data & clock::high_bit;
+
+  if (static_cast<bool>(value_bit) == v)
+    return;  // Value did not change
+
+  // Store the *current* (not incremented) clock value, toggling the previous
+  // value of the high bit.
+  data = (value_bit ^ clock::high_bit) | clock::value();
+
+  // Store the new data.
   m_data.store(data, std::memory_order::relaxed);
 }
 

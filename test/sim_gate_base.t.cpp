@@ -29,7 +29,7 @@ public:
     return &m_out;
   }
 
-  void connect_input(unsigned, const gate* , unsigned) override
+  void connect_input(unsigned, const gate* , unsigned = 0) override
   {
     // No inputs to connect
     assert(false);
@@ -60,7 +60,7 @@ public:
 
   void connect_input(unsigned    input_idx,
                      const gate* src_gate,
-                     unsigned    src_output_idx) override
+                     unsigned    src_output_idx = 0) override
   {
     assert(0 == input_idx);  // Precondition check
     m_in.connect_to(src_gate->get_output_lead(src_output_idx));
@@ -78,7 +78,7 @@ TEST(SimGateBaseTest, gateProtocol) {
 
   bit_source_g source;
   bit_sink_g   sink;
-  sink.connect_input(0, &source, 0);
+  sink.connect_input(0, &source);
   EXPECT_FALSE(sink.get_value());
 
   // First clock cycle: set `source` output to `false` (i.e. no change).
@@ -153,7 +153,7 @@ TEST(SimGateBaseTest, gateWithIOProtocol) {
 
   bit_source_g source;
   bit_sink_g   sink;
-  sink.connect_input(0, &source, 0);
+  sink.connect_input(0, &source);
   EXPECT_FALSE(sink.get_value());
 
   // First clock cycle: set `source` output to `false` (i.e. no change).
@@ -208,9 +208,9 @@ TEST(SimGateBaseTest, simpleGate) {
   implies_g     ig;
   std::array<sim::gate*, 4> gate_list{ &ig, &A, &B, &result };
 
-  result.connect_input(0, &ig, 0);
-  ig.connect_input(0, &A, 0);
-  ig.connect_input(1, &B, 0);
+  result.connect_input(0, &ig);
+  ig.connect_input(0, &A);
+  ig.connect_input(1, &B);
 
   for (unsigned i = 0; i < 4; ++i) {
     bool a = i & 1;  // Low bit

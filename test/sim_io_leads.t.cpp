@@ -9,7 +9,7 @@
 
 /// Single-thread test of the main functionality of `sim::input_lead::get` and
 /// `sim::output_lead` classes.
-TEST(SimIOLeads, InputOutputLead_ST) {
+TEST(SimIOLeads, IOLead_ST) {
   sim::output_lead ol;
   sim::input_lead  il; const sim::input_lead& ilC = il;
   il.connect_to(&ol);
@@ -40,7 +40,7 @@ TEST(SimIOLeads, InputOutputLead_ST) {
 
 /// Single-thread test of the of `sim::input_lead::get` and
 /// `sim::output_lead` classes `sim::output_lead` initialized to `true`.
-TEST(SimIOLeads, InitializedInputOutputLead_ST) {
+TEST(SimIOLeads, InitializedIOLead_ST) {
   sim::output_lead ol(true);  // With initial value
   sim::input_lead  il; const sim::input_lead& ilC = il;
   il.connect_to(&ol);
@@ -55,6 +55,27 @@ TEST(SimIOLeads, InitializedInputOutputLead_ST) {
 
   sim::clock::advance();
   EXPECT_FALSE(ilC.get());  // Change is now visible
+}
+
+/// Test the `output_lead::set_immediate` method
+TEST(SimIOLeads, SetImmediate) {
+  sim::output_lead ol;  // With initial value
+  sim::input_lead  il; const sim::input_lead& ilC = il;
+  il.connect_to(&ol);
+
+  EXPECT_FALSE(ilC.get());  // Sees initial value
+
+  ol.set_immediate(true);
+  EXPECT_TRUE(ilC.get());   // Sees immediate value in same clock cycle
+
+  sim::clock::advance();
+  EXPECT_TRUE(ilC.get());   // No change at start of new cycle
+
+  ol.set_immediate(false);
+  EXPECT_FALSE(ilC.get());   // Sees immediate value in same clock cycle
+
+  sim::clock::advance();
+  EXPECT_FALSE(ilC.get());  // No change at start of new cycle
 }
 
 // Local Variables:
