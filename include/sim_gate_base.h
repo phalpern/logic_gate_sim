@@ -66,6 +66,12 @@ protected:
 public:
   // Rule of 0. Implicitly non-copyable
 
+  /// Return the number of input leads
+  static constexpr std::size_t num_inputs() { return NumInputs; };
+
+  /// Return the number of output leads
+  static constexpr std::size_t num_outputs() { return NumOutputs; };
+
   const output_lead* get_output_lead(unsigned idx) const override;
 
   void connect_input(unsigned    input_idx,

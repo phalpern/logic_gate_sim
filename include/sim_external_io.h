@@ -10,7 +10,6 @@
 #define INCLUDED_SIM_EXTERNAL_IO
 
 #include <sim_gate_base.h>
-#include <ranges>
 
 namespace sim {
 
@@ -20,6 +19,8 @@ template <std::size_t SZ>
 class external_inputs : public gate_with_leads<0, SZ>
 {
 public:
+  static constexpr std::size_t size = SZ;
+
   external_inputs() = default;
 
   /// Set the value of the input port specified by `index`. The value is
@@ -42,7 +43,7 @@ public:
   /// values are visible at the start of the next clock cycle.
   void set_all_values(const std::array<bool, SZ>& values)
   {
-    for (auto i : std::views::iota(std::size_t{}, SZ))
+    for (std::size_t i = 0; i < SZ; ++i)
       this->m_outputs[i].set(values[i]);
   }
 
@@ -50,7 +51,7 @@ public:
   /// values are visible immediately, without waiting for the next clock cycle.
   void set_all_values_immediate(const std::array<bool, SZ>& values)
   {
-    for (auto i : std::views::iota(std::size_t{}, SZ))
+    for (std::size_t i = 0; i < SZ; ++i)
       this->m_outputs[i].set_immediate(values[i]);
   }
 
@@ -78,7 +79,7 @@ public:
   std::array<bool, SZ> get_all_values() const
   {
     std::array<bool, SZ> ret;
-    for (auto i : std::views::iota(std::size_t{}, SZ))
+    for (std::size_t i = 0; i < SZ; ++i)
       ret[i] = this->m_inputs[i].get();
     return ret;
   }
