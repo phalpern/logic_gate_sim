@@ -10,7 +10,7 @@
 #define INCLUDED_SIM_EXTERNAL_IO
 
 #include <sim_gate_base.h>
-#include <initializer_list>
+#include <ranges>
 
 namespace sim {
 
@@ -38,6 +38,22 @@ public:
     this->m_outputs[index].set_immediate(value);
   }
 
+  /// Set the value of input output leads at once from an single array. The
+  /// values are visible at the start of the next clock cycle.
+  void set_all_values(const std::array<bool, SZ>& values)
+  {
+    for (auto i : std::views::iota(std::size_t{}, SZ))
+      this->m_outputs[i].set(values[i]);
+  }
+
+  /// Set the value of input output leads at once from an single array. The
+  /// values are visible immediately, without waiting for the next clock cycle.
+  void set_all_values_immediate(const std::array<bool, SZ>& values)
+  {
+    for (auto i : std::views::iota(std::size_t{}, SZ))
+      this->m_outputs[i].set_immediate(values[i]);
+  }
+
   /// Do nothing on execute.
   void execute() override;
 };
@@ -56,6 +72,15 @@ public:
   {
     assert(index < SZ);  // precondition check
     return this->m_inputs[index].get();
+  }
+
+  /// Retrieve the value of all output leads in a single array.
+  std::array<bool, SZ> get_all_values() const
+  {
+    std::array<bool, SZ> ret;
+    for (auto i : std::views::iota(std::size_t{}, SZ))
+      ret[i] = this->m_inputs[i].get();
+    return ret;
   }
 
   /// Do nothing on execute.
