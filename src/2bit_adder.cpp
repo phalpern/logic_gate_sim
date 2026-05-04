@@ -10,7 +10,6 @@
 #include <sim_mainloop.h>
 #include <iostream>
 #include <iomanip>
-#include <span>
 
 // Circuit to add two 2-bit unsigned binary numbers to yield 2-bits + carry
 // (i.e., a 3-bit result). It consists of a half adder (one XOR gate and one
@@ -79,13 +78,15 @@ const sim::event<4> in_events[] = {
 
 int main()
 {
-  auto out_events = sim::main_loop(add2by2_circuit, std::span(in_events), 4);
+  auto out_events = sim::main_loop(add2by2_circuit, in_events, 4);
 
   const auto in_size    = sizeof(in_events) / sizeof(in_events[0]);
   const auto out_size   = out_events.size();
   constexpr auto max_ts = sim::clock::mask; // Max timestamp
 
-  // Pretty-print input and output events.
+  // Pretty-print input and output events, allowing you to see the propagation
+  // of the calculation over the course of 1-3 cycles after each change of
+  // input.
   std::size_t in_idx = 0, out_idx = 0;
   while (in_idx < in_size || out_idx < out_size)
   {
@@ -94,7 +95,7 @@ int main()
     if (in_ts < out_ts) {
       // Print input event only
       const auto& in_vals = in_events[in_idx].m_values;
-      std::cout << std::setw(2) << in_ts << ": in["
+      std::cout << std::setw(3) << in_ts << ": in["
                 << int(in_vals[A1]) << int(in_vals[A0]) << " + "
                 << int(in_vals[B1]) << int(in_vals[B0]) << "]\n";
       ++in_idx;
@@ -102,7 +103,7 @@ int main()
     else if (out_ts < in_ts) {
       // Print output event only
       const auto& out_vals = out_events[out_idx].m_values;
-      std::cout << std::setw(2) << out_ts << ":             out["
+      std::cout << std::setw(3) << out_ts << ":             out["
                 << int(out_vals[2]) << int(out_vals[1]) << int(out_vals[0])
                 << "]\n";
       ++out_idx;
@@ -111,7 +112,7 @@ int main()
       // Both input and output events have changed in the same clock cycle
       const auto& in_vals  = in_events[in_idx].m_values;
       const auto& out_vals = out_events[out_idx].m_values;
-      std::cout << std::setw(2) << in_ts << ": in["
+      std::cout << std::setw(3) << in_ts << ": in["
                 << int(in_vals[A1]) << int(in_vals[A0]) << " + "
                 << int(in_vals[B1]) << int(in_vals[B0]) << "] out["
                 << int(out_vals[2]) << int(out_vals[1]) << int(out_vals[0])

@@ -66,22 +66,12 @@ class circuit {
   std::vector<gate*>              m_gates;
 
 public:
+  /// Construct a circuit from a set of input ports, output ports, gates and
+  /// connections. This constructor works with CTAD so that the template
+  /// parameters need not be explicitly specified.
   constexpr circuit(external_inputs<NumIn>&                 in_ports,
                     external_outputs<NumOut> const&         out_ports,
-                    std::initializer_list<gate_connections> connections)
-    : m_in_ports(in_ports), m_out_ports(out_ports)
-  {
-    m_gates.reserve(connections.size());
-    for (const gate_connections& connect : connections) {
-      gate* dest = connect.m_dest_gate_p;
-      unsigned dest_input_idx = 0;
-      if (dest != &out_ports)
-        m_gates.push_back(dest);
-      for (const source_lead_designator& source : connect.m_connect_to)
-        dest->connect_input(dest_input_idx++, source.m_src_gate_p,
-                            source.m_src_output_idx);
-    }
-  }
+                    std::initializer_list<gate_connections> connections);
 
   constexpr external_inputs<NumIn>& in_ports() const { return m_in_ports; }
   constexpr external_outputs<NumOut> const& out_ports() const
@@ -101,7 +91,7 @@ struct event
   constexpr auto operator<=>(const event&) const = default;
 };
 
-/// Executes the main simulation loop. On each clock cycle, run `execute` on
+/// Execute the main simulation loop. On each clock cycle, run `execute` on
 /// each gate in `circuit` and write any output-port changes to the specified
 /// output stream. The `in_events` range specifies a timestamp and set of
 /// input-port values to be set when the clock reaches that timestamp; it must
@@ -111,7 +101,39 @@ template <std::size_t NumIn, std::size_t NumOut,
   requires std::same_as<event<NumIn>, std::ranges::range_value_t<InEventRange>>
 std::vector<event<NumOut>>
 main_loop(const circuit<NumIn, NumOut>& the_circuit,
-          InEventRange                  in_events,
+          const InEventRange&           in_events,
+          clock::value_type             extra_ticks);
+
+///////////////////////////////////////////////////////////////////////////////
+//           Inline and template implementations below this line             //
+///////////////////////////////////////////////////////////////////////////////
+
+template <std::size_t NumIn, std::size_t NumOut>
+constexpr circuit<NumIn, NumOut>::circuit(
+    external_inputs<NumIn>&                 in_ports,
+    external_outputs<NumOut> const&         out_ports,
+    std::initializer_list<gate_connections> connections)
+  : m_in_ports(in_ports), m_out_ports(out_ports)
+{
+  m_gates.reserve(connections.size());
+  for (const gate_connections& connect : connections) {
+    gate* dest = connect.m_dest_gate_p;
+    unsigned dest_input_idx = 0;
+    if (dest != &out_ports)
+      m_gates.push_back(dest);
+    for (const source_lead_designator& source : connect.m_connect_to)
+      dest->connect_input(dest_input_idx++, source.m_src_gate_p,
+                          source.m_src_output_idx);
+  }
+}
+
+
+template <std::size_t NumIn, std::size_t NumOut,
+          std::ranges::forward_range InEventRange>
+  requires std::same_as<event<NumIn>, std::ranges::range_value_t<InEventRange>>
+std::vector<event<NumOut>>
+main_loop(const circuit<NumIn, NumOut>& the_circuit,
+          const InEventRange&           in_events,
           clock::value_type             extra_ticks)
 {
   external_inputs<NumIn>&         in_ports  = the_circuit.in_ports();

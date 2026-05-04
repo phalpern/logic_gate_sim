@@ -36,7 +36,7 @@ TEST(sim_mainloop, AndNot) {
   };
 
   // Run the main loop
-  auto result = sim::main_loop(test_circuit, std::span(in_events), 16);
+  auto result = sim::main_loop(test_circuit, in_events, 16);
 
   // Verify results.
   EXPECT_EQ(result[ 0], (sim::event<2>{ 0, { false, false }}));
@@ -76,7 +76,7 @@ TEST(sim_mainloop, Cyclic) {
   };
 
   // Run the main loop.
-  auto result = sim::main_loop(cyclic_circuit, std::span(in_events), 5);
+  auto result = sim::main_loop(cyclic_circuit, in_events, 5);
 
   // Verify results.
   EXPECT_EQ(7, result.size());

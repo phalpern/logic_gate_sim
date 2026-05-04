@@ -31,7 +31,7 @@ file(GLOB_RECURSE GATESIM_ALL_SOURCES CONFIGURE_DEPENDS
 )
 
 set(GATESIM_MAIN_SOURCE
-    ${PROJECT_SOURCE_DIR}/src/gatesim_main.cpp
+    ${PROJECT_SOURCE_DIR}/src/2bit_adder.cpp
 )
 
 list(REMOVE_ITEM GATESIM_ALL_SOURCES ${GATESIM_MAIN_SOURCE})
@@ -53,25 +53,25 @@ target_compile_options(gatesim_lib
     PRIVATE -Wall -Wextra -Wpedantic
 )
 
-add_executable(gatesim
+add_executable(2bit_adder
     ${GATESIM_MAIN_SOURCE}
 )
 
 add_custom_target(run
-    COMMAND gatesim
-    DEPENDS gatesim
+    COMMAND ./2bit_adder
+    DEPENDS 2bit_adder
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
-target_link_libraries(gatesim
+target_link_libraries(2bit_adder
     PRIVATE gatesim_lib
 )
 
-target_include_directories(gatesim
+target_include_directories(2bit_adder
     PRIVATE ${PROJECT_SOURCE_DIR}/include
 )
 
-target_compile_options(gatesim
+target_compile_options(2bit_adder
     PRIVATE -Wall -Wextra -Wpedantic
 )
 
