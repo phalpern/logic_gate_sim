@@ -17,6 +17,7 @@
 #define INCLUDED_SIM_IO_LEADS
 
 #include <sim_clock.h>
+#include <atomic>
 
 namespace sim {
 

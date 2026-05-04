@@ -11,6 +11,7 @@
 
 #include <sim_clock.h>
 #include <sim_io_leads.h>
+#include <array>
 
 namespace sim {
 

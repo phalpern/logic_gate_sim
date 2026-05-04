@@ -9,8 +9,6 @@
 #ifndef INCLUDED_SIM_CLOCK
 #define INCLUDED_SIM_CLOCK
 
-#include <atomic>
-#include <array>
 #include <cassert>
 
 namespace sim {
