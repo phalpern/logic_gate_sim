@@ -25,6 +25,8 @@
 #include <array>
 #include <span>
 #include <ranges>
+#include <algorithm>
+#include <execution>
 #include <vector>
 
 namespace sim {
@@ -127,7 +129,6 @@ constexpr circuit<NumIn, NumOut>::circuit(
   }
 }
 
-
 template <std::size_t NumIn, std::size_t NumOut,
           std::ranges::forward_range InEventRange>
   requires std::same_as<event<NumIn>, std::ranges::range_value_t<InEventRange>>
@@ -146,8 +147,12 @@ main_loop(const circuit<NumIn, NumOut>& the_circuit,
   for (auto& event : in_events) {
     assert(clock::value() <= event.m_timestamp);
     while (clock::value() < event.m_timestamp) {
-      for (gate* g : the_circuit.gates())
-        g->execute();
+      // Run the `execute` method of each gate, potentially in parallel.
+      std::for_each(std::execution::par,
+                    the_circuit.gates().begin(), the_circuit.gates().end(),
+                    [](gate *g){
+                      g->execute();
+                    });
       clock::advance();
       if (auto new_out = out_ports.get_all_values(); last_out != new_out) {
         out_events.emplace_back(clock::value(), new_out);
@@ -159,8 +164,11 @@ main_loop(const circuit<NumIn, NumOut>& the_circuit,
 
   // Run `extra_ticks` more loops
   for (clock::value_type t = 0; t < extra_ticks; ++t) {
-    for (gate* g : the_circuit.gates())
-      g->execute();
+    std::for_each(std::execution::par,
+                  the_circuit.gates().begin(), the_circuit.gates().end(),
+                  [](gate *g){
+                    g->execute();
+                  });
     clock::advance();
     if (auto new_out = out_ports.get_all_values(); last_out != new_out) {
       out_events.emplace_back(clock::value(), new_out);

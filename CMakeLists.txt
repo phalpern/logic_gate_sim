@@ -44,7 +44,16 @@ add_library(gatesim_lib
     ${GATESIM_ALL_SOURCES}
 )
 
+add_library(gatesim_lib_tsan
+    ${GATESIM_ALL_SOURCES}
+)
+
 target_include_directories(gatesim_lib
+    PUBLIC
+        ${PROJECT_SOURCE_DIR}/include
+)
+
+target_include_directories(gatesim_lib_tsan
     PUBLIC
         ${PROJECT_SOURCE_DIR}/include
 )
@@ -53,7 +62,15 @@ target_compile_options(gatesim_lib
     PRIVATE -Wall -Wextra -Wpedantic
 )
 
+target_compile_options(gatesim_lib_tsan
+    PRIVATE -Wall -Wextra -Wpedantic -fsanitize=thread -O2 -g
+)
+
 add_executable(2bit_adder
+    ${GATESIM_MAIN_SOURCE}
+)
+
+add_executable(2bit_adder_tsan
     ${GATESIM_MAIN_SOURCE}
 )
 
@@ -63,16 +80,34 @@ add_custom_target(run
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
+add_custom_target(tsan
+    COMMAND ./2bit_adder_tsan
+    DEPENDS 2bit_adder_tsan
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
 target_link_libraries(2bit_adder
-    PRIVATE gatesim_lib
+    PRIVATE gatesim_lib -ltbb
+)
+
+target_link_libraries(2bit_adder_tsan
+    PRIVATE gatesim_lib_tsan -fsanitize=thread -ltbb
 )
 
 target_include_directories(2bit_adder
     PRIVATE ${PROJECT_SOURCE_DIR}/include
 )
 
+target_include_directories(2bit_adder_tsan
+    PRIVATE ${PROJECT_SOURCE_DIR}/include
+)
+
 target_compile_options(2bit_adder
     PRIVATE -Wall -Wextra -Wpedantic
+)
+
+target_compile_options(2bit_adder_tsan
+    PRIVATE -Wall -Wextra -Wpedantic -fsanitize=thread -O2 -g
 )
 
 enable_testing()
@@ -85,7 +120,7 @@ foreach(test_source ${GATESIM_TEST_SOURCES})
     )
 
     target_link_libraries(${test_name}
-        PRIVATE gatesim_lib GTest::gtest_main
+        PRIVATE gatesim_lib GTest::gtest_main -ltbb
     )
 
     target_compile_options(${test_name}
