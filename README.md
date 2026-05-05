@@ -1,6 +1,6 @@
 # Logic Gate Simulator
 
-Atropos take-home exercise by Pablo Halpern
+Atropos take-home exercise -- Pablo Halpern
 
 # Summary
 
@@ -16,16 +16,16 @@ The program takes two types of input data:
 
 1. A configuration of gates and the connections between them.
 
-2. A time-sequence of values for all of the Boolean input lines.
+2. A time sequence of Boolean values for all input lines.
 
 The program terminates when all input has been consumed and a specified number
-of clock ticks have passed since the last input's timestamp.
+of clock ticks have passed since timestamp of the last input.
 
-Since each set of input bits has a clock value at which it occurs, it is
-guaranteed that all inputs will eventually be consumed (though not every change
-in the input will necessarily result in a change to the output).
+Since each set of input bits has a timestamp (in ticks) when it occurs, all
+inputs are guaranteed to be consumed (though not every change in the input will
+necessarily result in a change to the output).
 
-The main entry point returns a vector containing a time-sequence of values for
+The main entry point returns a vector containing a time sequence of values for
 each Boolean output line.
 
 # Source Code and Build instructions
@@ -37,7 +37,7 @@ development platform was Ubuntu Linux 24.04 running in Windows under WSL.
 Clone the repo:
 
 ```
-$ git clone https://github.com/phalpern/logic_gate_sim.git`
+$ git clone https://github.com/phalpern/logic_gate_sim.git
 ```
 
 Configure using `cmake`:
@@ -77,13 +77,19 @@ but certain attributes are simplified for the purpose of simulation:
 
 * The interconnects between the gates are lossless and have sub-tick
   propagation. However, a value written within one clock cycle is not available
-  to the next connected gate until start of the next cycle. Multiple changes
+  to the next connected gate until the start of the next cycle. Multiple changes
   within a single clock cycle are not allowed and would be considered a
   programming error within the simulation.
 
 * A consequence of the previous constraint is that each gate's inputs are
   stable within a single clock cycle; changes to those inputs are invisible
   until the start of the next clock cycle.
+
+* The simulation is deterministic: for a given circuit configuration and input
+  time sequence, the output time sequence is uniquely defined and identical
+  across runs. This holds despite potential parallel execution of gate
+  evaluation, since all state changes are applied in discrete clock ticks with
+  well-defined visibility rules.
 
 # Sample Simulation
 
@@ -92,7 +98,7 @@ input values) would be specified in external files (text, json, or something
 like that). Given the limited time available, they are instead encoded as C++
 objects using a primitive DSL.
 
-The `2bit_adder.cpp` file contains a simulation of an adder circuit build from
+The `2bit_adder.cpp` file contains a simulation of an adder circuit built from
 XOR, AND, and OR gates. It adds two 2-bit unsigned integers and produces a
 2-bit result plus carry (or a 3-bit result, depending on how you want to look
 at it).  There are 4 input bits and 3 output bits. The inputs change every 4
@@ -122,14 +128,19 @@ driver, including an example of a circuit containing a cycle.
 
 ## Basic Structure
 
-The main objects in the system are gates and interconnects. Interconnect are
-not represented by distinct objects. Rather, each gate's input leads contains
-pointers to another gate's output leads, comprising a many-to-one mapping.
-Each type of gate is a distinct class derived from `gate`. The `execute`
-virtual function contains the gate-specific logic. The special gate types
-`input_ports` and `output_ports` are used directly by the simulation machinery;
-otherwise all gate types are treated identically. It is straightforward to add
-new gate types to the system.
+At a high level, the simulator models a directed graph of gates connected via
+implicit interconnects (input leads pointing to output leads). At each clock
+tick, all gates are evaluated (via `execute`), the clock advances, and any
+resulting output changes are recorded.
+
+The main objects in the system are gates and interconnects. Interconnects are
+not represented by distinct objects; instead, each gate's input leads contain
+pointers to other gates' output leads, forming a many-to-one mapping. Each gate
+type is implemented as a class derived from `gate`, with gate-specific logic in
+the `execute` virtual function. The special gate types `input_ports` and
+`output_ports` are used directly by the simulation machinery; otherwise, all
+gate types are treated uniformly. It is straightforward to extend the system
+with new gate types.
 
 Once a circuit is built up, the simulation runs in a main loop that can be
 summarized as
@@ -145,7 +156,7 @@ Theoretically, a large simulation could be accelerated using multiple CPUs. The
 system is designed so that `execute` can be called on any number of gates in
 parallel. An interconnect can have one writer concurrently with any number of
 readers, without using synchronization (including memory barriers). The
-simulated clock is always advanced serially within of the main loop, never in
+simulated clock is always advanced serially within the main loop, never in
 parallel with a call to `execute`.
 
 I experimented with running `execute` in a parallel `for_each`. The program
@@ -168,7 +179,7 @@ be updated in parallel, changing the main loop to something like:
 
  1. In a subloop, call the `execute` method on each gate.
  2. In a subloop, process each interconnect so that the just-set value becomes
-    visible to readers,
+    visible to readers.
  3. Advance the clock by one tick.
  4. If any output port changed, append the timestamped outputs to the results
     vector.
@@ -184,8 +195,8 @@ if graphic visualizations were added.
 
 The current implementation maintains a heterogeneous collection of gate objects
 as a vector of base-class pointers.  Calling the `execute` virtual function in
-the hot subloop (step 1 in the main loop) can be inefficient because, 1) it
-requires pointer indirection and, 2) it requires virtual-function dispatch,
+the hot subloop (step 1 in the main loop) can be inefficient because (1) it
+requires pointer indirection and (2) it requires virtual-function dispatch,
 which can defeat the CPU's branch predictor and prefetch machinery.
 
 A better alternative might be to sort the gates into multiple collections,
@@ -241,15 +252,17 @@ programming process.  Specifically:
    the AI generate the remaining test cases.
 5. I used the AI to rename identifiers across the project during refactoring
    passes.
+6. I used ChatGPT to proof read this `README` file and suggest improvements.
 
 Items 1 and 2 were big time savers. Items 3, 4, and 5 might've saved a little
-time, but they were mostly experimentation with what the AI was capable of.
+time, but they were mostly experimentation with what the AI was capable
+of. The changes resulting from item 6 were modest, but useful.
 
 ## Time Spent
 
 I spent about 25 hours, total, on specification and coding. I admit to
-significantly exceeding the 16-hour time limit. A major portion of that extra
-time was spent on test drivers and refactoring interfaces.
+significantly exceeding the 16-hour time allotment. A major portion of that
+extra time was spent on test drivers and refactoring interfaces.
 
 When I started my project, I had a new computer that was not completely set up
 for coding. I was careful not to include setup time in my accounting, but some
