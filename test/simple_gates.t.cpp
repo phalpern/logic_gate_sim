@@ -64,6 +64,8 @@ TEST(simple_gates, ANDGate) {
   TestGate<simple_gates::AND>(truth_table);
 }
 
+////////////// The remaining tests were implemented by AI /////////////////////
+
 TEST(simple_gates, ORGate) {
   static constexpr bool truth_table[] = {
     //        in0

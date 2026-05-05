@@ -21,6 +21,8 @@ void AND::execute()
   this->m_outputs[0].set(in0 && in1);
 }
 
+///////////// The remaining gates were implemented by AI /////////////////////
+
 void OR::execute()
 {
   bool in0 = this->m_inputs[0].get();

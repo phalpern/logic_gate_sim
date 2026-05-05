@@ -149,6 +149,9 @@ main_loop(const circuit<NumIn, NumOut>& the_circuit,
       for (gate* g : the_circuit.gates())
         g->execute();
       clock::advance();
+
+      // If any output ports changed, add the new set of output bits to the
+      // result vector.
       if (auto new_out = out_ports.get_all_values(); last_out != new_out) {
         out_events.emplace_back(clock::value(), new_out);
         last_out = new_out;
