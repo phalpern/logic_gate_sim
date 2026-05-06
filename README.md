@@ -31,8 +31,9 @@ each Boolean output line.
 # Source Code and Build instructions
 
 Building this project requires a C++23 compiler (I used Clang++ 18.1.3, but
-earlier versions of Clang or GCC should also work), cmake, Ninja, and git. My
-development platform was Ubuntu Linux 24.04 running in Windows under WSL.
+earlier versions of Clang or GCC should also work), cmake, Ninja, GoogleTesta,
+and git. My development platform was Ubuntu Linux 24.04 running in Windows
+under WSL.
 
 Clone the repo:
 
